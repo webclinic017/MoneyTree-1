@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Order History
+        </div>
+    </h3>
+</div>
+<table class="ui celled striped inverted black table">
+    <thead>
+      <tr>
+        <th>Created</th>
+        <th>Side</th>
+        <th>Quantity</th>
+        <th>Symbol</th>
+        <th>Price</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.created_at }}</td>
+            <td>{{ order.side }}</td>
+            <td>{{ order.filled_qty }}</td>
+            <td>{{ order.symbol }}</td>
+            <td>{{ order.filled_avg_price }}</td>
+            <td>{{ order.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

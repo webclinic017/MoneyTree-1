@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Strategies
+        </div>
+    </h3>
+</div>
+<table class="ui celled striped inverted black table">
+    <thead>
+      <tr>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for strategy in strategies %}
+        <tr>
+            <td>
+                <a href="/strategy/{{ strategy.id }}">
+                    {{ strategy.name }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

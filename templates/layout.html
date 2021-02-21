@@ -1,0 +1,107 @@
+<html>
+    <head>
+        <title>MoneyTree</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+        <style type="text/css">
+            body {
+                background:  black;
+            }
+            .buttonstyle { 
+                background: rgb(218, 216, 216); 
+                background-position: 0px -401px; 
+                border: solid 1px #000000;
+                border-radius: 5px;
+                color: rgb(76, 78, 78);
+                height: 27px;
+                margin-top: 2px;
+                margin-left: 4px;
+                padding-bottom: -3px;
+            }
+            .buttonstyle:hover {
+                background: rgb(106, 253, 253);
+                background-position: 0px -501px;
+                color: #000000;
+            }
+            .container {
+                width: 100%;
+                margin: 0 auto;
+                overflow: hidden;
+                border-bottom:solid 5px;
+                border-color: rgb(106, 253, 253);
+            }
+            .logo {
+                float: right;
+                color: rgb(106, 253, 253);
+                padding-top: 12px;
+                padding-right: 24px;
+            }
+            header {
+                background: #000000;
+            }
+            header::after {
+                content: '';
+                display: table;
+                clear: both;
+                margin-bottom: 11px;
+            }
+            nav {
+                float: left;
+            }
+            nav ul {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+            nav li {
+                display: inline-block;
+                margin-left: 30px;
+                padding-top: 12px;
+                padding-bottom: 13px;
+                position: relative;
+            }
+            nav a {
+                color: white;
+                text-decoration: none;
+                text-transform: uppercase;
+                font-size: 12px;
+            }
+            nav a:hover {
+                color: rgb(106, 253, 253);
+            }
+            nav a::before {
+                content: '';
+                display: block;
+                height: 5px;
+                background-color: rgb(106, 253, 253);
+                position: absolute;
+                top: 0;
+                width: 0%;
+                transition: all ease-in-out 250ms;
+            }
+            nav a:hover::before {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="container">
+                <nav>
+                    <ul>
+                        <li><a href="/">Stocks</a></li>
+                        <li><a href="/strategies">Strategies</a></li>
+                        <li><a href="/orders">Order History</a></li>
+                    </ul>
+                </nav>
+                <div class="logo">
+                    MoneyTree<i class="square tree icon"></i>
+                </div>
+            </div>
+        </header>
+        <div class="ui container">
+            {% block content %}
+            {% endblock %}
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    </body>
+</html>
