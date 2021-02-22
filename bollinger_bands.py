@@ -2,9 +2,11 @@ import sqlite3, config, notifications, ssl, tulipy
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime
 from timezone import is_dst
+from utils import calculate_quantity
 
 print(datetime.now())
-
+ 
+# Eventually refactor into a Strategy class
 # Opening Range Break Strategy
 strategy_name = 'bollinger_bands'
 
@@ -47,8 +49,6 @@ print(existing_order_symbols)
 messages = []
 short_messages = []
 
-qty = 100
-
 for symbol in symbols:
 
     minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
@@ -73,6 +73,7 @@ for symbol in symbols:
                 limit_price = current_candle.close
                 candle_range = current_candle.high - current_candle.low
 
+                qty = calculate_quantity(limit_price)
                 print(f"placing order for {symbol} at {limit_price}")
 
                 total_spend = qty * limit_price
