@@ -2,6 +2,7 @@ import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
 from datetime import date
 from timezone import is_dst
+from utils import calculate_quantity
 
 # Opening Range Break Strategy
 strategy_name = 'opening_range_breakout'
@@ -45,8 +46,6 @@ print(existing_order_symbols)
 messages = []
 short_messages = []
 
-qty = 100
-
 for symbol in symbols:
     
     minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
@@ -67,6 +66,8 @@ for symbol in symbols:
         if symbol not in existing_order_symbols:
             print(symbol)
             limit_price = after_opening_range_breakout.iloc[0]['close']
+
+            qty = calculate_quantity(limit_price)
 
             total_spend = qty * limit_price
             total_profit = qty * (limit_price + opening_range) - (qty * limit_price)
