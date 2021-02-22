@@ -74,7 +74,6 @@ for symbol in symbols:
                 candle_range = current_candle.high - current_candle.low
 
                 qty = calculate_quantity(limit_price)
-
                 print(f"placing order for {symbol} at {limit_price}")
 
                 total_spend = qty * limit_price

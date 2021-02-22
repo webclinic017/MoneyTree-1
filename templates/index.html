@@ -32,30 +32,30 @@
                     <th>Symbol</th>
                     <th>Name</th>
                     <th>Price</th>
-                    <th style="white-space:nowrap;">RSI 14</th>
                     <th style="white-space:nowrap;"> SMA 20</th>
                     <th style="white-space:nowrap;">SMA 50</th>
+                    <th style="white-space:nowrap;">RSI 14</th>
                 </tr>
             </thead>
             <tbody>
                 {% for stock in stocks %}
                 <tr>
                     <td>{{ stock.symbol }}</td>
-                    <td><a href="/stock/{{ stock.symbol }}"> {% if stock.name[0:20].split(' ', 1)[0] != 'The' %} {{ (stock.name[0:20].split(' ', 1)[0]) }} {% elif stock.name[0:20].split(' ', 1)[0] == 'The' or 'First' %} {{ (stock.name[0:20].split(' ', 1)[1]) }} {% else %} {{ (stock.name[0:20].split(' ', 1)[0]) }} {% endif %}</a></td>
+                    <td><a href="/stock/{{ stock.symbol }}">{% if stock.name |length > 40 %}{{ stock.name[0:40] + "..." }}{% elif stock.name |length <= 40 %}{{ stock.name[0:40] }}{% else %}{{ stock.name[0:40] }}{% endif %}</a></td>
                     {% if indicator_values[stock.symbol] %}
-                        <td>{{ indicator_values[stock.symbol].close|round(2) }}</td>
-                        {% if indicator_values[stock.symbol].rsi_14 %}
-                            <td>{{ indicator_values[stock.symbol].rsi_14|round(2) }}</td>
-                        {% else %}
-                            <td>N/A</td>
-                        {% endif %}
+                        <td>${{ indicator_values[stock.symbol].close|round(2) }}</td>
                         {% if indicator_values[stock.symbol].sma_20 %}
-                            <td>{{ indicator_values[stock.symbol].sma_20|round(2) }}</td>
+                            <td>${{ indicator_values[stock.symbol].sma_20|round(2) }}</td>
                         {% else %}
                             <td>N/A</td>
                         {% endif %}
                         {% if indicator_values[stock.symbol].sma_50 %}
-                            <td>{{ indicator_values[stock.symbol].sma_50|round(2) }}</td>
+                            <td>${{ indicator_values[stock.symbol].sma_50|round(2) }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                        {% endif %}
+                        {% if indicator_values[stock.symbol].rsi_14 %}
+                            <td>{{ indicator_values[stock.symbol].rsi_14|round(2) }}</td>
                         {% else %}
                             <td>N/A</td>
                         {% endif %}

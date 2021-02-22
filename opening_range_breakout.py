@@ -1,8 +1,10 @@
 import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
-from datetime import date
+from datetime import date, datetime
 from timezone import is_dst
 from utils import calculate_quantity
+
+print(datetime.now())
 
 # Opening Range Break Strategy
 strategy_name = 'opening_range_breakout'
@@ -64,34 +66,44 @@ for symbol in symbols:
 
     if not after_opening_range_breakout.empty:
         if symbol not in existing_order_symbols:
-            print(symbol)
+            
             limit_price = after_opening_range_breakout.iloc[0]['close']
 
             qty = calculate_quantity(limit_price)
 
             total_spend = qty * limit_price
             total_profit = qty * (limit_price + opening_range) - (qty * limit_price)
-            total_loss = qty * (limit_price - opening_range) - (qty * limit_price)
+            total_loss = abs(qty * (limit_price - opening_range) - (qty * limit_price))
 
-            messages.append(f"placing order for {symbol} at {limit_price}, closed_above {opening_range_high}\n\n{after_opening_range_breakout.iloc[0]}\n\n")
+            messages.append(f"BUY >>>>>>> {symbol}")
+            messages.append(f"Total Spend: ${total_spend} @ ${limit_price} per share")
+            messages.append(f"Total Potential Profit: +${round(total_profit,0)} @ ${round((limit_price + opening_range),2)} per share")
+            messages.append(f"Total Potential Loss: -${round(total_loss,0)} @ ${round((limit_price - opening_range),2)} per share")
+            messages.append(f"1 Min Bar closed above {opening_range_high}:")
+            messages.append(f"{after_opening_range_breakout.iloc[0]}\n\n")
+
             short_messages.append(f"B | {symbol} | ${round(limit_price,2)} | ${round(total_spend,2)} | +${round(total_profit,2)} | -${round(total_loss,2)} ")
             print(f"placing order for {symbol} at {limit_price}, closed_above {opening_range_high} at {after_opening_range_breakout.iloc[0]}")
 
-            api.submit_order(
-                symbol=symbol,
-                side='buy',
-                type='limit',
-                qty= qty,
-                time_in_force='day',
-                order_class='bracket',
-                limit_price=limit_price,
-                take_profit=dict(
-                    limit_price=limit_price + opening_range,
-                ),
-                stop_loss=dict(
-                    stop_price=limit_price - opening_range,
+            try:
+                api.submit_order(
+                    symbol=symbol,
+                    side='buy',
+                    type='limit',
+                    qty= qty,
+                    time_in_force='day',
+                    order_class='bracket',
+                    limit_price=limit_price,
+                    take_profit=dict(
+                        limit_price=limit_price + opening_range,
+                    ),
+                    stop_loss=dict(
+                        stop_price=limit_price - opening_range,
+                    )
                 )
-            )
+            except Exception as e:
+                print(f"could not submit order; {e}")
+
         else:
             print(f"Already an order for {symbol}, skipping")
 

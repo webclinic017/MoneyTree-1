@@ -33,6 +33,9 @@ cursor.execute("""
     )
 """)
 
+# insert into strategy table. (eventually build into MT app)
+# INSERT INTO strategy (name) value (<new strategy name>);
+
 # creates the strategy table where we will store our different strategies
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS strategy (
