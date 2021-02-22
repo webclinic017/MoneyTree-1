@@ -8,6 +8,7 @@ print(datetime.now())
 
 # Opening Range Break Strategy
 strategy_name = 'opening_range_breakout'
+print(strategy_name)
 
 connection = sqlite3.connect(config.DB_FILE)
 connection.row_factory = sqlite3.Row

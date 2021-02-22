@@ -9,6 +9,7 @@ print(datetime.now())
 # Eventually refactor into a Strategy class
 # Opening Range Break Strategy
 strategy_name = 'bollinger_bands'
+print(strategy_name)
 
 connection = sqlite3.connect(config.DB_FILE)
 connection.row_factory = sqlite3.Row
@@ -67,8 +68,7 @@ for symbol in symbols:
         # entry signal
         if current_candle.close > lower[-1] and previous_candle.close < lower[-2]:
             
-            # if symbol not in existing_order_symbols:
-            if symbol in existing_order_symbols:
+            if symbol not in existing_order_symbols:
 
                 limit_price = current_candle.close
                 candle_range = current_candle.high - current_candle.low
@@ -77,7 +77,7 @@ for symbol in symbols:
                 print(f"placing order for {symbol} at {limit_price}")
 
                 total_spend = qty * limit_price
-                total_profit = qty * (limit_price + (candle_range * 3)) - (qty * limit_price)
+                total_profit = (qty * (limit_price + (candle_range * 3))) - (qty * limit_price)
                 total_loss = abs(qty * (previous_candle.low) - (qty * limit_price))
 
                 messages.append(f"BUY >>>>>>> {symbol}")
