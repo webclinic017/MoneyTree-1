@@ -1,7 +1,9 @@
 import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
-from datetime import date
+from datetime import date, datetime
 from timezone import is_dst
+
+print(datetime.now())
 
 # Opening Range Break Strategy
 strategy_name = 'opening_range_breakdown'
@@ -88,7 +90,7 @@ for symbol in symbols:
                     )
                 )
             except Exception as e:
-                print(f"coud not submit order; {e}")
+                print(f"could not submit order; {e}")
 
         else:
             print(f"Already an order for {symbol}, skipping")

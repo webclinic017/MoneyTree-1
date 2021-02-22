@@ -25,14 +25,6 @@ def send_trade_notification(messages,short_messages,strategy_name):
             server.login(config.EMAIL_ADDRESS, config.EMAIL_PASSWORD)
             server.sendmail(config.EMAIL_ADDRESS, config.EMAIL_ADDRESS, email_message)
 
-            text_message = "\n".join([
-                f"From: {config.EMAIL_ADDRESS}",
-                f"To: {config.EMAIL_SMS}",
-                f"Subject: Sending some trades your way!"            
-            ])
-
-            server.sendmail(config.EMAIL_ADDRESS, config.EMAIL_SMS, text_message)
-
             for sm in short_messages:
                 time.sleep(5)
                 text_message = "\n".join([
