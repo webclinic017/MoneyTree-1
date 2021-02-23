@@ -34,7 +34,7 @@ cursor.execute("""
 """)
 
 # insert into strategy table. (eventually build into MT app)
-# INSERT INTO strategy (name) value (<new strategy name>);
+# INSERT INTO strategy (name) values (<new strategy name>);
 
 # creates the strategy table where we will store our different strategies
 cursor.execute("""
@@ -56,7 +56,7 @@ cursor.execute("""
 """)
 
 # inserts strategies into the strategy table
-strategies = ['opening_range_breakout', 'opening_range_breakdown']
+strategies = ['opening_range_breakout', 'opening_range_breakdown','bollinger_bands']
 
 for strategy in strategies:
     cursor.execute("""
