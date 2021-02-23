@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from datetime import date
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates/html")
 
 # decorator that provides the route on the local host
 @app.get("/")
