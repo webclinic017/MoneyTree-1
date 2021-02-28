@@ -4,6 +4,7 @@ from datetime import date, datetime, time, timedelta
 import pandas as pd
 
 class OpeningRangeBreakout(backtrader.Strategy):
+    # make this param a variable that can be changed from app
     params = dict(
         num_opening_bars=15
     )
@@ -72,6 +73,7 @@ class OpeningRangeBreakout(backtrader.Strategy):
             if self.position and (self.data.close[0] < (self.opening_range_high - self.opening_range)):
                 self.order = self.close()
 
+            # liquidate at 2:45pm EST
             if self.position and current_bar_datetime.time() >= time(14, 45, 0):
                 self.log("RUNNING OUT OF TIME - LIQUIDATING POSITION")
                 self.close()
@@ -96,15 +98,17 @@ if __name__ == '__main__':
 
     stocks = cursor.fetchall()
 
-    # TESTING for one stock and show plot #AMD
-    stocks = [{'stock_id': 93}]
+    # make this a variable that can be changed from app
+    # TESTING for one stock and show plot #AAPL
+    stocks = [{'stock_id': 9395}]
     # TESTING
 
     for stock in stocks:
         print(f"== Testing {stock['stock_id']} ==")
 
         cerebro = backtrader.Cerebro()
-        cerebro.broker.setcash(100000.0)
+        # make this param a variable that can be changed from app
+        cerebro.broker.setcash(25000.0)
         cerebro.addsizer(backtrader.sizers.PercentSizer, percents=95)
 
         dataframe = pd.read_sql("""
@@ -125,3 +129,9 @@ if __name__ == '__main__':
 
         cerebro.run()
         cerebro.plot()
+
+## Future Ideas
+# Build out a pandas dataframe log that can be stored on /mnt/drivehard
+# can log strategy used, timeframe, stock, setcash, profit/loss.
+# Eventually add more info like trades, avg. profit/loss on each trade.
+# Pipe in the SPY or DOW to see how the profit/loss compared to the market.
