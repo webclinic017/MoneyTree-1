@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Backtesting
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted padded segment">
+    <form action="/submit_backtest_config" method="post">
+        <div class="ui equal width form">
+            <div class="row">
+                <span><div class="fluid ui inverted teal large label">Create Configuration</div></span>
+            </div>
+            <div class="ui divider"></div>
+            <div class="inline field">
+                <div class="ui inverted teal horizontal medium basic label">Select Stock:</div>
+                <select class="ui search dropdown" name="stock_id">
+                        <option value="none" selected disabled hidden>
+                            ---
+                        </option>
+                    {% for stock in stocks %}
+                        <option value="{{ stock.id }}">{{ stock.symbol }} | {{ stock.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="ui divider"></div>
+            <div class="inline field">
+                <div class="ui inverted teal horizontal medium basic label">Select Strategy:</div>
+                <select class="ui search dropdown" name="strategy">
+                        <option value="none" selected disabled hidden>
+                            ---
+                        </option>
+                    {% for strat in strategies %}
+                        <option value="{{ strat }}">{{ strat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="ui divider"></div>
+            <div class="inline fields">
+                <div class="ui divider"></div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Start Date:</div>
+                    <select class="ui search dropdown" name="start_date">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for st_date in dates %}
+                            <option value="{{ st_date }}">{{ st_date }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="ui divider"></div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select End Date</div>
+                    <select class="ui search dropdown" name="end_date">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for e_date in dates %}
+                            <option value="{{ e_date }}">{{ e_date }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="ui divider"></div>
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Starting Cash:</div>
+                    <select class="ui search dropdown" name="set_cash">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for cash in set_cash %}
+                            <option value="{{ cash }}">${{ cash }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Opening Range:</div>
+                    <select class="ui search dropdown" name="open_range">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for minute in opening_range %}
+                            <option value="{{ minute }}">{{ minute }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Liquidate Time:</div>
+                    <select class="ui search dropdown" name="liquidate_time">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for time in liquidate_time %}
+                            <option value="{{ time }}">{{ time }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="ui divider"></div>
+        </div>
+    </form>
+    <div class="inline field">
+        <input button class="fluid ui inverted teal medium button" type="submit" value="Submit Config"/>
+    </div>
+</div>
+{% endblock %}

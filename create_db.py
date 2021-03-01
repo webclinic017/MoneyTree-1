@@ -11,7 +11,8 @@ cursor.execute("""
         symbol TEXT NOT NULL UNIQUE, 
         name TEXT NOT NULL,
         exchange TEXT NOT NULL,
-        shortable BOOLEAN NOT NULL
+        shortable BOOLEAN NOT NULL,
+        backtest_data BOOLEAN NOT NULL
     )
 """)
 
@@ -66,6 +67,21 @@ cursor.execute("""
         strategy_id INTEGER NOT NULL,
         FOREIGN KEY (stock_id) REFERENCES stock (id)
         FOREIGN KEY (strategy_id) REFERENCES strategy (id)
+    )
+""")
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS backtest_config (
+        run_id INTEGER PRIMARY KEY,
+        date NOT NULL,
+        stock_id INTEGER,
+        strategy NOT NULL,
+        bt_start NOT NULL,
+        bt_end NOT NULL,
+        set_cash INTEGER NOT NULL,
+        open_range INTEGER NOT NULL,
+        liquidate_time INTEGER NOT NULL,
+        FOREIGN KEY (stock_id) REFERENCES stock (id)
     )
 """)
 

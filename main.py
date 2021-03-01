@@ -1,12 +1,26 @@
-import sqlite3, config, datetime, calendar
+import sqlite3, config, datetime, calendar, os
 import alpaca_trade_api as tradeapi
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from datetime import date
+from flask import send_from_directory
+from utils import get_market_hours_time
+from typing import List
+from datetime import datetime as dt
+import pandas as pd
+from pydantic import BaseModel
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+# class BTConfig(BaseModel):
+#     open_range : int
+#     liquidate_time : str
+#     set_cash : int
+#     strategy : str
+#     start_date : str
+#     end_date : str
 
 # decorator that provides the route on the local host
 @app.get("/")
@@ -198,7 +212,6 @@ def orders(request: Request):
 def strategy(request: Request, strategy_id):
     connection = sqlite3.connect(config.DB_FILE)
     connection.row_factory = sqlite3.Row
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -218,3 +231,96 @@ def strategy(request: Request, strategy_id):
     stocks = cursor.fetchall()
 
     return templates.TemplateResponse("strategy.html", {"request": request, "stocks": stocks, "strategy": strategy})
+
+@app.get("/backtesting")
+def backtesting_home(request: Request):
+    connection = sqlite3.connect(config.DB_FILE)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    #setting static start and end dates for now
+    sdate = dt(2020, 4, 13).date()
+    edate = dt(2021, 2, 19).date()
+    dates = pd.date_range(sdate,edate-datetime.timedelta(days=1),freq='d')
+
+    cursor.execute("""
+        SELECT * FROM stock
+        WHERE backtest_data = 1
+    """)
+    
+    stocks = cursor.fetchall()
+
+    opening_range = list(range(1,60))
+
+    liquidate_time = get_market_hours_time()
+
+    set_cash = list(range(20000,100001, 5000))
+
+    strategies = ['opening_range_breakout','bollinger_bands']
+
+    return templates.TemplateResponse("backtesting.html", {"request": request, "stocks": stocks, "opening_range": opening_range, \
+                                                           "liquidate_time":liquidate_time, "set_cash":set_cash, "strategies":strategies, \
+                                                           "dates":dates})
+
+@app.post("/submit_backtest_config", status_code=201)
+def submit_backtest_config(stock_id: int = Form(...), start_date: str = Form(...), end_date: str = Form(...), \
+                           strategy: str = Form(...), set_cash: int = Form(...), open_range: int = Form(...), \
+                           liquidate_time: str = Form(...)):
+    connection = sqlite3.connect(config.DB_FILE)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT MAX(run_id)
+    FROM backtest_config
+    """)
+    max_run_id = cursor.fetchone()
+    try:
+        run_id = max_run_id[0]+1
+    except TypeError:
+        run_id = 1
+
+    date = dt.now()
+
+    bt_start = start_date
+
+    bt_end = end_date
+
+    cursor.execute("""
+        INSERT INTO backtest_config (run_id, date, stock_id, strategy, bt_start, bt_end, set_cash, open_range, liquidate_time) VALUES (?,?,?,?,?,?,?,?,?)
+    """, (run_id, date, stock_id, strategy, bt_start , \
+          bt_end, set_cash, open_range, liquidate_time))
+    
+    connection.commit()
+
+    return RedirectResponse(url=f"/backtesting/config_set_{stock_id}", status_code=303)
+
+@app.get("/backtesting/config_set_{stock_id}")
+def backtest_config_set(request: Request, stock_id):
+    connection = sqlite3.connect(config.DB_FILE)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT symbol, name
+        FROM stock
+        WHERE id = ?
+    """, (stock_id,))
+
+    stock = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT *
+        FROM backtest_config
+        WHERE stock_id = ?
+        ORDER BY date DESC
+    """, (stock_id,))
+
+    backtest_configs = cursor.fetchall()
+
+    set_config = backtest_configs[0]
+
+    print(set_config)
+
+    return templates.TemplateResponse("backtest_config_set.html", {"request":request, "stock":stock, \
+                                                                   "backtest_configs":backtest_configs, \
+                                                                   "set_config":set_config})

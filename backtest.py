@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 import pandas as pd
 
 class OpeningRangeBreakout(backtrader.Strategy):
-    # make this param a variable that can be changed from app
+    
     params = dict(
         num_opening_bars=15
     )

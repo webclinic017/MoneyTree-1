@@ -18,8 +18,8 @@
         <tbody>
             {% for stock in stocks %}
             <tr>
-                <td>{{ stock.symbol }}</td>
-                <td><a href="/stock/{{ stock.symbol }}">{{ stock.name }}</a></td>
+                <td><a href="/stock/{{ stock.symbol }}">{{ stock.symbol }}</a></td>
+                <td>{{ stock.name }}</td>
 
             </tr>
             {% endfor %}
