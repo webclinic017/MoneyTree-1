@@ -324,3 +324,72 @@ def backtest_config_set(request: Request, stock_id):
     return templates.TemplateResponse("backtest_config_set.html", {"request":request, "stock":stock, \
                                                                    "backtest_configs":backtest_configs, \
                                                                    "set_config":set_config})
+
+# post for running the backtest. the redirect will go to the performance report page
+@app.post("/run_backtest", status_code=201)
+def submit_backtest_config(stock_id: int = Form(...), start_date: str = Form(...), end_date: str = Form(...), \
+                           strategy: str = Form(...), set_cash: int = Form(...), open_range: int = Form(...), \
+                           liquidate_time: str = Form(...)):
+    connection = sqlite3.connect(config.DB_FILE)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT MAX(run_id)
+    FROM backtest_config
+    """)
+    max_run_id = cursor.fetchone()
+    try:
+        run_id = max_run_id[0]+1
+    except TypeError:
+        run_id = 1
+
+    date = dt.now()
+
+
+    # Log the output in a backtest_reports table with a link to the run_id
+    # Save the plots in a folder "reports/" where the following get can access them.
+    bt_start = start_date
+
+    bt_end = end_date
+
+    cursor.execute("""
+        INSERT INTO backtest_config (run_id, date, stock_id, strategy, bt_start, bt_end, set_cash, open_range, liquidate_time) VALUES (?,?,?,?,?,?,?,?,?)
+    """, (run_id, date, stock_id, strategy, bt_start , \
+          bt_end, set_cash, open_range, liquidate_time))
+    
+    connection.commit()
+
+    return RedirectResponse(url=f"/backtesting/config_set_{stock_id}", status_code=303)
+
+# performance report page where I'll be able to build out a fancy performance report
+# once the backtest is logged in backtest_reports, then the query below can pull using the run_id
+@app.get("/backtesting/config_set_{stock_id}")
+def backtest_config_set(request: Request, stock_id):
+    connection = sqlite3.connect(config.DB_FILE)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT symbol, name
+        FROM stock
+        WHERE id = ?
+    """, (stock_id,))
+
+    stock = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT *
+        FROM backtest_config
+        WHERE stock_id = ?
+        ORDER BY date DESC
+    """, (stock_id,))
+
+    backtest_configs = cursor.fetchall()
+
+    set_config = backtest_configs[0]
+
+    print(set_config)
+
+    return templates.TemplateResponse("backtest_config_set.html", {"request":request, "stock":stock, \
+                                                                   "backtest_configs":backtest_configs, \
+                                                                   "set_config":set_config})

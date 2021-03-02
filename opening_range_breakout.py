@@ -52,6 +52,8 @@ short_messages = []
 for symbol in symbols:
     
     minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
+
+    print(minute_bars)
     
     opening_range_mask = (minute_bars.index >= start_minute_bar) & (minute_bars.index < end_minute_bar)
     opening_range_bars = minute_bars.loc[opening_range_mask]
