@@ -13,23 +13,26 @@ class PerformanceReport:
     """ Report with performce stats for given backtest run
     """
 
-    def __init__(self, stratbt, infilename, user, memo, outputdir, conn):
+    def __init__(self, stratbt, conn, infilename, user, memo, outputdir, run_id):
         self.stratbt = stratbt  # works for only 1 stategy
         self.infilename = infilename
         self.outputdir = outputdir
         self.user = user
         self.memo = memo
         self.check_and_assign_defaults()
+        self.conn = conn
+        self.cursor = self.conn.cursor()
+        self.run_id = run_id
 
     def check_and_assign_defaults(self):
         """ Check initialization parameters or assign defaults
         """
         if not self.infilename:
             self.infilename = 'Not given'
-        if not dir_exists(self.outputdir):
-            msg = "*** ERROR: outputdir {} does not exist."
-            print(msg.format(self.outputdir))
-            sys.exit(0)
+        # if not dir_exists(self.outputdir):
+        #     msg = "*** ERROR: outputdir {} does not exist."
+        #     print(msg.format(self.outputdir))
+        #     sys.exit(0)
         if not self.user:
             self.user = 'GKCap'
         if not self.memo:
@@ -215,10 +218,38 @@ class PerformanceReport:
     # log the data from kpis into a database table 
     def log_backtest_report(self):
         kpis = self.get_performance_stats()
-        print(kpis['start_cash'])
+        # need to get run_id from the backtest_config query.
+        kpis['run_id'] = self.run_id
 
-    #### STOPPED HERE ####
-    # Need to take the kpis dict and log it into a database.
+        print(self.run_id)
+
+        rows =[]
+        rows.append(kpis)
+        kpis_df = pd.DataFrame.from_dict(rows)
+
+        kpis_df = kpis_df[['run_id', 'start_cash', 'rpl', 'result_won_trades', 'result_lost_trades', 'profit_factor',
+                           'rpl_per_trade', 'total_return', 'annual_return', 'max_money_drawdown', 'max_pct_drawdown',
+                           'total_number_trades', 'trades_closed', 'pct_winning', 'pct_losing', 'avg_money_winning',
+                           'avg_money_losing', 'best_winning_trade', 'worst_losing_trade', 'sharpe_ratio',
+                           'sqn_score', 'sqn_human']]
+        # round(answer, 2)
+        self.cursor.execute("""
+            INSERT INTO backtest_report
+            (run_id, start_cash, rpl, result_won_trades, result_lost_trades, profit_factor, rpl_per_trade,
+            total_return, annual_return, max_money_drawdown, max_pct_drawdown, total_number_trades, trades_closed,
+            pct_winning, pct_losing, avg_money_winning, avg_money_losing, best_winning_trade, worst_losing_trade,
+            sharpe_ratio, sqn_score, sqn_human) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (int(kpis_df.run_id[0]), int(kpis_df.start_cash[0]), round(kpis_df.rpl[0],2), round(kpis_df.result_won_trades[0],2),
+                round(kpis_df.result_lost_trades[0],2),round(kpis_df.profit_factor[0],2), round(kpis_df.rpl_per_trade[0],2),
+                round(kpis_df.total_return[0],2), round(kpis_df.annual_return[0],2),round(kpis_df.max_money_drawdown[0],2),
+                round(kpis_df.max_pct_drawdown[0],2), int(kpis_df.total_number_trades[0]), int(kpis_df.trades_closed[0]),
+                round(kpis_df.pct_winning[0],2), round(kpis_df.pct_losing[0],2), round(kpis_df.avg_money_winning[0],2),
+                round(kpis_df.avg_money_losing[0],2), round(kpis_df.best_winning_trade[0],2), round(kpis_df.worst_losing_trade[0],2),
+                (round(kpis_df.sharpe_ratio[0],2) if kpis_df.sharpe_ratio[0] is not None else kpis_df.sharpe_ratio[0]),
+                (round(kpis_df.sqn_score[0],2) if kpis_df.sqn_score[0] is not None else kpis_df.sqn_score[0]),
+                kpis_df.sqn_human[0]))
+
+        self.conn.commit()
 
     def generate_pdf_report(self):
         """ Returns PDF report with backtest results
@@ -301,9 +332,9 @@ class Cerebro(bt.Cerebro):
         return self.runstrats[0][0]
 
     def report(self, conn, outputdir=None,
-               infilename=None, user=None, memo=None):
+               infilename=None, user=None, memo=None, run_id=None):
         bt = self.get_strategy_backtest()
-        rpt =PerformanceReport(bt, infilename=infilename, user=user,
-                               memo=memo,outputdir=outputdir,conn=conn)
+        rpt =PerformanceReport(bt, conn=conn, infilename=infilename, user=user,
+                               memo=memo, outputdir=outputdir, run_id=run_id)
         rpt.log_backtest_report()
-        rpt.generate_pdf_report()
+        # rpt.generate_pdf_report()

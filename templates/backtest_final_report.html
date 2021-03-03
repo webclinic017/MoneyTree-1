@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Backtesting Report [TEST]
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            {{ stock.name }}
+            ({{ stock.symbol }})
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted segment">
+    <div class="fluid ui inverted teal large label">Results:</div>
+    <div class="ui divider"></div>
+    <table id="backtest_table" class="ui collapsing celled striped inverted black padded table">
+        <thead>
+            <tr>
+                <th>Run Id</th>
+                <th>Start Cash</th>
+                <th>RPL</th>
+                <th>Won Trades Result</th>
+                <th>Lost Trades Result</th>
+                <th>Profit Factor</th>
+                <th>RPL per Trade</th>
+                <th>Total Return</th>
+                <th style="white-space:nowrap;">Total Number Trades</th>
+                <th>Pct Winning</th>
+                <th>SQN Score</th>
+                <th>SQN Human</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ report.run_id }}</td>
+                <td>{{ report.start_cash }}</td>
+                <td>{{ report.rpl }}</td>
+                <td>{{ report.result_won_trades }}</td>
+                <td>{{ report.result_lost_trades }}</td>
+                <td>{{ report.profit_factor }}</td>
+                <td>{{ report.rpl_per_trade }}</td>
+                <td>{{ report.total_return }}</td>
+                <td>{{ report.total_number_trades }}</td>
+                <td>{{ report.pct_winning }}</td>
+                <td>{{ report.sqn_score }}</td>
+                <td>{{ report.sqn_human }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

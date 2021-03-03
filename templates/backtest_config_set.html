@@ -9,6 +9,7 @@
     </h3>
 </div>
 <div class="ui raised inverted padded segment">
+    <form action="/run_backtest" method="post">
     <div class="row">
         <span><div class="fluid ui inverted teal large label">Set Configuration</div></span>
     </div>
@@ -72,8 +73,11 @@
     </div>
     <div class="ui divider"></div>
     <div class="inline field">
+        <input type="hidden" name="run_id" value="{{ set_config.run_id }}"/>
+        <input type="hidden" name="stock_id" value="{{ set_config.stock_id }}"/>
         <input button class="fluid ui inverted teal medium button" type="submit" value="Run Backtest"/>
     </div>
+    </form>
 </div>
 <div class="ui raised inverted segment">
     <div class="fluid ui inverted teal large label">Backtesting Log</div>

@@ -1,137 +1,90 @@
-import config
-import backtrader, pandas, sqlite3, matplotlib
-from datetime import date, datetime, time, timedelta
+# -*- coding: utf-8; py-indent-offset:4 -*-
+import os, sqlite3, config, sys
 import pandas as pd
+import backtrader as bt
+from report import Cerebro
+from strategy_classes import CrossOver, OpeningRangeBreakout
 
-# class OpeningRangeBreakout(backtrader.Strategy):
+# Convert this into a bactest function that can be called within main and it runs and inserts 
+#  data into the database. The inserting into the database part can be done within the report.py file.
+
+# The adjacent get function will pull the data from the database using the run_id.
+#  The data will then be presented.
+
+def saveplots(cerebro, numfigs=1, iplot=True, start=None, end=None,
+             width=16, height=9, dpi=300, tight=True, use=None, file_path = '', **kwargs):
+
+        from backtrader import plot
+        if cerebro.p.oldsync:
+            plotter = plot.Plot_OldSync(**kwargs)
+        else:
+            plotter = plot.Plot(**kwargs)
+
+        figs = []
+        for stratlist in cerebro.runstrats:
+            for si, strat in enumerate(stratlist):
+                rfig = plotter.plot(strat, figid=si * 100,
+                                    numfigs=numfigs, iplot=iplot,
+                                    start=start, end=end, use=use)
+                figs.append(rfig)
+
+        for fig in figs:
+            for f in fig:
+                f.savefig(file_path, bbox_inches='tight')
+        return figs
+
+def backtest(stock_id, strategy, conn, start_date=None, end_date=None, \
+             open_range=None, run_id=None,liquidate_time='15:00:00', set_cash=25000):
     
-#     params = dict(
-#         num_opening_bars=15
-#     )
-
-#     def __init__(self):
-#         self.opening_range_low = 0
-#         self.opening_range_high = 0
-#         self.opening_range = 0
-#         self.bought_today = False
-#         self.order = None
+    print(f"== Testing {stock_id} ==")
     
-#     def log(self, txt, dt=None):
-#         if dt is None:
-#             dt = self.datas[0].datetime.datetime()
-
-#         print('%s, %s' % (dt, txt))
-
-#     def notify_order(self, order):
-#         if order.status in [order.Submitted, order.Accepted]:
-#             # Buy/Sell order submitted/accepted to/by broker - Nothing to do
-#             return
-
-#         # Check if an order has been completed
-#         if order.status in [order.Completed]:
-#             order_details = f"{order.executed.price}, Cost: {order.executed.value}, Comm {order.executed.comm}"
-
-#             if order.isbuy():
-#                 self.log(f"BUY EXECUTED, Price: {order_details}")
-#             else:  # Sell
-#                 self.log(f"SELL EXECUTED, Price: {order_details}")
+    df = pd.read_sql("""
+        SELECT datetime, open, high, low, close, volume
+        FROM stock_price_minute
+        WHERE stock_id = :stock_id
+        AND strftime('%Y-%m-%d', datetime) >= :start_date
+        AND strftime('%Y-%m-%d', datetime) <= :end_date
+        ORDER BY datetime ASC
+        LIMIT 10000
+        """, conn, params={"stock_id":stock_id,"start_date":start_date, \
+                           "end_date":end_date}, index_col='datetime', parse_dates=['datetime'])
+    data = df.between_time('09:30:00', '16:00:00')
+    
+    # initialize Cerebro engine, extende with report method
+    cerebro = Cerebro()
+    cerebro.broker.setcash(set_cash)
+    cerebro.addsizer(bt.sizers.PercentSizer, percents=95)
+    
+    # add data
+    feed = bt.feeds.PandasData(dataname=df)
+    cerebro.adddata(feed)
+    
+    if strategy == 'opening_range_breakout':
+        cerebro.addstrategy(strategy=OpeningRangeBreakout)
+    else:
+        # add Golden Cross strategy
+        params = (('fast', 50),('slow', 200))
+        cerebro.addstrategy(strategy=CrossOver, **dict(params))
         
-#         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-#             self.log('Order Canceled/Margin/Rejected')
+    cerebro.run()
+    
+    # saveplots(cerebro, file_path = 'backtest_output.png')
+    
+    cerebro.report(conn, memo=f'{stock_id} | {run_id}', run_id=run_id)
+    
+    return print('== Backtesting Complete ==')
 
-#         self.order = None
+# Test complete - logs data into database
 
-#     def next(self):
-#         current_bar_datetime = self.data.num2date(self.data.datetime[0])
-#         previous_bar_datetime = self.data.num2date(self.data.datetime[-1])
+# stock_id = 9395
+# strategy = "crossover"
+# start_date = '2020-04-20'
+# end_date = '2020-07-20'
+# set_cash = 100000
+# run_id = 4
 
-#         if current_bar_datetime.date() != previous_bar_datetime.date():
-#             self.opening_range_low = self.data.low[0]
-#             self.opening_range_high = self.data.high[0]
-#             self.bought_today = False
-        
-#         opening_range_start_time = time(9, 30, 0)
-#         dt = datetime.combine(date.today(), opening_range_start_time) + timedelta(minutes=self.p.num_opening_bars)
-#         opening_range_end_time = dt.time()
+# conn = sqlite3.connect(config.DB_FILE)
+# cursor = conn.cursor()
 
-#         if current_bar_datetime.time() >= opening_range_start_time \
-#             and current_bar_datetime.time() < opening_range_end_time:           
-#             self.opening_range_high = max(self.data.high[0], self.opening_range_high)
-#             self.opening_range_low = min(self.data.low[0], self.opening_range_low)
-#             self.opening_range = self.opening_range_high - self.opening_range_low
-#         else:
-#             if self.order:
-#                 return
-            
-#             if self.position and (self.data.close[0] > (self.opening_range_high + self.opening_range)):
-#                 self.close()
-                
-#             if self.data.close[0] > self.opening_range_high and not self.position and not self.bought_today:
-#                 self.order = self.buy()
-#                 self.bought_today = True
-
-#             if self.position and (self.data.close[0] < (self.opening_range_high - self.opening_range)):
-#                 self.order = self.close()
-
-#             # liquidate at 2:45pm EST
-#             if self.position and current_bar_datetime.time() >= time(14, 45, 0):
-#                 self.log("RUNNING OUT OF TIME - LIQUIDATING POSITION")
-#                 self.close()
-
-#     def stop(self):
-#         self.log('(Num Opening Bars %2d) Ending Value %.2f' %
-#                  (self.params.num_opening_bars, self.broker.getvalue()))
-
-#         if self.broker.getvalue() > 130000:
-#             self.log("*** BIG WINNER ***")
-
-#         if self.broker.getvalue() < 70000:
-#             self.log("*** MAJOR LOSER ***")
-
-if __name__ == '__main__':
-    conn = sqlite3.connect(config.DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT DISTINCT(stock_id) as stock_id FROM stock_price_minute
-    """)
-
-    stocks = cursor.fetchall()
-
-    # make this a variable that can be changed from app
-    # TESTING for one stock and show plot #AAPL
-    stocks = [{'stock_id': 9395}]
-    # TESTING
-
-    for stock in stocks:
-        print(f"== Testing {stock['stock_id']} ==")
-
-        cerebro = backtrader.Cerebro()
-        # make this param a variable that can be changed from app
-        cerebro.broker.setcash(25000.0)
-        cerebro.addsizer(backtrader.sizers.PercentSizer, percents=95)
-
-        dataframe = pd.read_sql("""
-            SELECT datetime, open, high, low, close, volume
-            FROM stock_price_minute
-            WHERE stock_id = :stock_id
-            AND strftime('%H:%M:%S', datetime) >= '09:30:00'
-            AND strftime('%H:%M:%S', datetime) >= '16:00:00'
-            ORDER BY datetime ASC
-        """, conn, params={"stock_id": stock['stock_id']}, index_col='datetime', parse_dates=['datetime'])
-
-        data = backtrader.feeds.PandasData(dataname=dataframe)
-
-        cerebro.adddata(data)
-        cerebro.addstrategy(OpeningRangeBreakout)
-
-        # strats = cerebro.optstrategy(OpeningRangeBreakout, num_opening_bars=[15, 30, 60])
-
-        cerebro.run()
-        cerebro.plot()
-
-## Future Ideas
-# Build out a pandas dataframe log that can be stored on /mnt/drivehard
-# can log strategy used, timeframe, stock, setcash, profit/loss.
-# Eventually add more info like trades, avg. profit/loss on each trade.
-# Pipe in the SPY or DOW to see how the profit/loss compared to the market.
+# backtest(stock_id, strategy, conn, start_date=start_date, end_date=end_date, \
+#          run_id=run_id, set_cash=set_cash)

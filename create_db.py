@@ -85,6 +85,34 @@ cursor.execute("""
     )
 """)
 
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS backtest_report (
+        run_id INTEGER,
+        start_cash INTEGER,
+        rpl REAL,
+        result_won_trades REAL,
+        result_lost_trades REAL,
+        profit_factor REAL,
+        rpl_per_trade REAL,
+        total_return REAL,
+        annual_return REAL,
+        max_money_drawdown REAL,
+        max_pct_drawdown REAL,
+        total_number_trades INTEGER,
+        trades_closed INTEGER,
+        pct_winning REAL,
+        pct_losing REAL,
+        avg_money_winning REAL,
+        avg_money_losing REAL,
+        best_winning_trade REAL,
+        worst_losing_trade REAL,
+        sharpe_ratio REAL,
+        sqn_score REAL,
+        sqn_human TEXT,
+        FOREIGN KEY(run_id) REFERENCES backtest_config(run_id)
+    )
+""")
+
 # inserts strategies into the strategy table
 strategies = ['opening_range_breakout', 'opening_range_breakdown','bollinger_bands']
 
