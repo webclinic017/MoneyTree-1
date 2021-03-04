@@ -1,6 +1,7 @@
 import sqlite3, config, datetime, calendar, os
 import alpaca_trade_api as tradeapi
 from fastapi import FastAPI, Request, Form
+from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from datetime import date
@@ -12,16 +13,11 @@ import pandas as pd
 from pydantic import BaseModel
 from backtest import backtest, saveplots
 
+from dashapp import create_dash_app
+import uvicorn
+
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-# class BTConfig(BaseModel):
-#     open_range : int
-#     liquidate_time : str
-#     set_cash : int
-#     strategy : str
-#     start_date : str
-#     end_date : str
 
 # decorator that provides the route on the local host
 @app.get("/")
@@ -349,8 +345,6 @@ def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
 
     return RedirectResponse(url=f"/backtesting/final_report_{stock_id}_{run_id}", status_code=303)
 
-# performance report page where I'll be able to build out a fancy performance report
-# once the backtest is logged in backtest_reports, then the query below can pull using the run_id
 @app.get("/backtesting/final_report_{stock_id}_{run_id}")
 def final_report(request: Request, stock_id, run_id):
     connection = sqlite3.connect(config.DB_FILE)
@@ -375,3 +369,9 @@ def final_report(request: Request, stock_id, run_id):
 
     return templates.TemplateResponse("backtest_final_report.html", {"request":request, "stock":stock, \
                                                                      "report":report})
+
+dash_app = create_dash_app(routes_pathname_prefix="/dash/")
+app.mount("/", WSGIMiddleware(dash_app.server))
+
+if __name__ == "__main__":
+    uvicorn.run(app)

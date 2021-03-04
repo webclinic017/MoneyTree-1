@@ -214,6 +214,15 @@ class PerformanceReport:
         all_numbers = {**header, **kpis, **graphics}
         html_out = template.render(all_numbers)
         return html_out
+    
+    def generate_curve_data(self):
+        curve = self.get_equity_curve()
+
+        curve_df = pd.DataFrame(curve)
+        curve_df = curve_df.rename(columns = {0:"value"})
+        curve_df.to_csv("/data/curve_data.csv")
+
+        return print("== curve_data updated ==")
 
     # log the data from kpis into a database table 
     def log_backtest_report(self):
@@ -259,6 +268,8 @@ class PerformanceReport:
         HTML(string=html).write_pdf(outfile)
         msg = "See {} for report with backtest results."
         print(msg.format(outfile))
+
+        return print("dash report served")
 
     def get_strategy_name(self):
         return self.stratbt.__class__.__name__
@@ -337,4 +348,5 @@ class Cerebro(bt.Cerebro):
         rpt =PerformanceReport(bt, conn=conn, infilename=infilename, user=user,
                                memo=memo, outputdir=outputdir, run_id=run_id)
         rpt.log_backtest_report()
+        rpt.generate_curve_data()
         # rpt.generate_pdf_report()

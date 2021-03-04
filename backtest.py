@@ -45,7 +45,6 @@ def backtest(stock_id, strategy, conn, start_date=None, end_date=None, \
         AND strftime('%Y-%m-%d', datetime) >= :start_date
         AND strftime('%Y-%m-%d', datetime) <= :end_date
         ORDER BY datetime ASC
-        LIMIT 10000
         """, conn, params={"stock_id":stock_id,"start_date":start_date, \
                            "end_date":end_date}, index_col='datetime', parse_dates=['datetime'])
     data = df.between_time('09:30:00', '16:00:00')
@@ -79,7 +78,7 @@ def backtest(stock_id, strategy, conn, start_date=None, end_date=None, \
 # stock_id = 9395
 # strategy = "crossover"
 # start_date = '2020-04-20'
-# end_date = '2020-07-20'
+# end_date = '2020-06-20'
 # set_cash = 100000
 # run_id = 4
 

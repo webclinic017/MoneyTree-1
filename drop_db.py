@@ -22,4 +22,16 @@ cursor.execute("""
     DROP TABLE strategy
 """)
 
+cursor.execute("""
+    DROP TABLE stock_price_minute
+""")
+
+cursor.execute("""
+    DROP TABLE backtest_config
+""")
+
+cursor.execute("""
+    DROP TABLE backtest_report
+""")
+
 connection.commit()
