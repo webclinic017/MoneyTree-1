@@ -11,9 +11,9 @@ from typing import List
 from datetime import datetime as dt
 import pandas as pd
 from pydantic import BaseModel
-from backtest import backtest, saveplots
+from backtesting.backtest import backtest, saveplots
 
-from dashapp import create_dash_app
+from backtesting.dashapp import create_dash_app
 import uvicorn
 
 app = FastAPI()
@@ -230,7 +230,7 @@ def strategy(request: Request, strategy_id):
     return templates.TemplateResponse("strategy.html", {"request": request, "stocks": stocks, "strategy": strategy})
 
 @app.get("/backtesting")
-def backtesting_home(request: Request):
+def backtest_start(request: Request):
     connection = sqlite3.connect(config.DB_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
@@ -253,9 +253,9 @@ def backtesting_home(request: Request):
 
     set_cash = list(range(20000,100001, 5000))
 
-    strategies = ['opening_range_breakout','bollinger_bands']
+    strategies = ['opening_range_breakout','crossover']
 
-    return templates.TemplateResponse("backtesting.html", {"request": request, "stocks": stocks, "opening_range": opening_range, \
+    return templates.TemplateResponse("backtest_start.html", {"request": request, "stocks": stocks, "opening_range": opening_range, \
                                                            "liquidate_time":liquidate_time, "set_cash":set_cash, "strategies":strategies, \
                                                            "dates":dates})
 
@@ -326,7 +326,7 @@ def backtest_config_set(request: Request, stock_id):
 
 # post for running the backtest. the redirect will go to the performance report page
 @app.post("/run_backtest", status_code=201)
-def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
+async def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
     conn = sqlite3.connect(config.DB_FILE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -342,6 +342,9 @@ def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
     backtest(stock_id=bt_config['stock_id'], strategy=bt_config['strategy'], conn=conn,
              start_date=bt_config['bt_start'], end_date=bt_config['bt_end'], open_range=bt_config['open_range'],
              run_id=bt_config['run_id'], liquidate_time=bt_config['liquidate_time'], set_cash=bt_config['set_cash'])
+
+    dash_app = create_dash_app(routes_pathname_prefix="/dash/")
+    app.mount("/", WSGIMiddleware(dash_app.server))
 
     return RedirectResponse(url=f"/backtesting/final_report_{stock_id}_{run_id}", status_code=303)
 
@@ -369,9 +372,6 @@ def final_report(request: Request, stock_id, run_id):
 
     return templates.TemplateResponse("backtest_final_report.html", {"request":request, "stock":stock, \
                                                                      "report":report})
-
-dash_app = create_dash_app(routes_pathname_prefix="/dash/")
-app.mount("/", WSGIMiddleware(dash_app.server))
 
 if __name__ == "__main__":
     uvicorn.run(app)

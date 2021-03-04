@@ -87,6 +87,7 @@ class PerformanceReport:
         dt = st.data._dataname['open'].index
         value = st.observers.broker.lines[1].array[:len(dt)]
         curve = pd.Series(data=value, index=dt)
+
         return 100 * curve / curve.iloc[0]
 
     def _sqn2rating(self, sqn_score):
@@ -219,8 +220,13 @@ class PerformanceReport:
         curve = self.get_equity_curve()
 
         curve_df = pd.DataFrame(curve)
+
+        # filter down to only the value at market close for each day.
+        curve_df.index = pd.to_datetime(curve_df.index)
+        curve_df = curve_df.between_time('00:04:00', '00:04:00')
+
         curve_df = curve_df.rename(columns = {0:"value"})
-        curve_df.to_csv("/data/curve_data.csv")
+        curve_df.to_csv("/Users/kylespringfield/Dev/MoneyTree/backtesting/data/curve_data.csv")
 
         return print("== curve_data updated ==")
 
@@ -344,9 +350,10 @@ class Cerebro(bt.Cerebro):
 
     def report(self, conn, outputdir=None,
                infilename=None, user=None, memo=None, run_id=None):
+
         bt = self.get_strategy_backtest()
-        rpt =PerformanceReport(bt, conn=conn, infilename=infilename, user=user,
-                               memo=memo, outputdir=outputdir, run_id=run_id)
-        rpt.log_backtest_report()
+        rpt = PerformanceReport(bt, conn=conn, infilename=infilename, user=user,
+                                memo=memo, outputdir=outputdir, run_id=run_id)
         rpt.generate_curve_data()
+        rpt.log_backtest_report()
         # rpt.generate_pdf_report()

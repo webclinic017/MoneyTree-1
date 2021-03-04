@@ -2,7 +2,7 @@
 import os, sqlite3, config, sys
 import pandas as pd
 import backtrader as bt
-from report import Cerebro
+from backtesting.report import Cerebro
 from strategy_classes import CrossOver, OpeningRangeBreakout
 
 # Convert this into a bactest function that can be called within main and it runs and inserts 
