@@ -1,14 +1,12 @@
 import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime
-from timezone import is_dst
-from utils import calculate_quantity
+from utils import is_dst
 
 print(datetime.now())
 
 # Opening Range Break Strategy
-strategy_name = 'opening_range_breakout'
-print(strategy_name)
+strategy_name = 'opening_range_breakdown'
 
 connection = sqlite3.connect(config.DB_FILE)
 connection.row_factory = sqlite3.Row
@@ -39,7 +37,7 @@ if is_dst():
     start_minute_bar = f"{current_date} 09:30:00-05:00"
     end_minute_bar = f"{current_date} 09:45:00-05:00"
 else:
-    start_minute_bar = f"{current_date} 09:30:00-04:00"
+    start_minute_bar = f"{current_date} 09:30:00-04:00" 
     end_minute_bar = f"{current_date} 09:45:00-04:00"
 
 orders = api.list_orders(status='all', after=current_date)
@@ -52,8 +50,6 @@ short_messages = []
 for symbol in symbols:
     
     minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
-
-    print(minute_bars)
     
     opening_range_mask = (minute_bars.index >= start_minute_bar) & (minute_bars.index < end_minute_bar)
     opening_range_bars = minute_bars.loc[opening_range_mask]
@@ -65,43 +61,32 @@ for symbol in symbols:
     after_opening_range_mask = minute_bars.index >= end_minute_bar
     after_opening_range_bars = minute_bars.loc[after_opening_range_mask]
 
-    after_opening_range_breakout = after_opening_range_bars[after_opening_range_bars['close'] > opening_range_high]
+    after_opening_range_breakdown = after_opening_range_bars[after_opening_range_bars['close'] < opening_range_low]
 
-    if not after_opening_range_breakout.empty:
+    if not after_opening_range_breakdown.empty:
         if symbol not in existing_order_symbols:
+            print(symbol)
+            limit_price = after_opening_range_breakdown.iloc[0]['close']
+
+            message = f"selling short {symbol} at {limit_price}, closed_below {opening_range_low}\n\n{after_opening_range_breakdown.iloc[0]}\n\n"
+            messages.append(message)
+            short_messages.append(f"Short {symbol} @ ${round(limit_price,2)}! T @ ${round(limit_price-opening_range,2)}; SL @ ${round(limit_price+opening_range,2)}")
+            print(message)
             
-            limit_price = after_opening_range_breakout.iloc[0]['close']
-
-            qty = calculate_quantity(limit_price)
-
-            total_spend = qty * limit_price
-            total_profit = qty * (limit_price + opening_range) - (qty * limit_price)
-            total_loss = abs(qty * (limit_price - opening_range) - (qty * limit_price))
-
-            messages.append(f"BUY >>>>>>> {symbol}")
-            messages.append(f"Total Spend: ${total_spend} @ ${limit_price} per share")
-            messages.append(f"Total Potential Profit: +${round(total_profit,0)} @ ${round((limit_price + opening_range),2)} per share")
-            messages.append(f"Total Potential Loss: -${round(total_loss,0)} @ ${round((limit_price - opening_range),2)} per share")
-            messages.append(f"1 Min Bar closed above {opening_range_high}:")
-            messages.append(f"{after_opening_range_breakout.iloc[0]}\n\n")
-
-            short_messages.append(f"B | {symbol} | ${round(limit_price,2)} | ${round(total_spend,2)} | +${round(total_profit,2)} | -${round(total_loss,2)} ")
-            print(f"placing order for {symbol} at {limit_price}, closed_above {opening_range_high} at {after_opening_range_breakout.iloc[0]}")
-
             try:
                 api.submit_order(
                     symbol=symbol,
-                    side='buy',
+                    side='sell',
                     type='limit',
-                    qty= qty,
+                    qty='100',
                     time_in_force='day',
                     order_class='bracket',
                     limit_price=limit_price,
                     take_profit=dict(
-                        limit_price=limit_price + opening_range,
+                        limit_price=limit_price - opening_range,
                     ),
                     stop_loss=dict(
-                        stop_price=limit_price - opening_range,
+                        stop_price=limit_price + opening_range,
                     )
                 )
             except Exception as e:

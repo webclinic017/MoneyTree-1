@@ -1,8 +1,7 @@
 import sqlite3, config, notifications, ssl, tulipy
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime
-from timezone import is_dst
-from utils import calculate_quantity
+from utils import calculate_quantity, is_dst
 
 print(datetime.now())
  
