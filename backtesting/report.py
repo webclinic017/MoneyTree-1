@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./")
+
 import backtrader as bt
 from backtrader import plot
 import matplotlib.pyplot as plt
@@ -5,7 +8,7 @@ import os, sqlite3, config
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
-from report_utils import timestamp2str, get_now, dir_exists
+from utils import timestamp2str, get_now, dir_exists
 
 conn = sqlite3.connect(config.DB_FILE)
 
@@ -215,20 +218,102 @@ class PerformanceReport:
         all_numbers = {**header, **kpis, **graphics}
         html_out = template.render(all_numbers)
         return html_out
+
+    def generate_return_data(self):
+
+        curve = self.get_equity_curve()
+        period = self._get_periodicity()
+        values = curve.resample(period[1]).ohlc()['close']
+        # returns = 100 * values.diff().shift(-1) / values
+        returns = 100 * values.diff() / values
+        returns.index = returns.index.date
+        returns = pd.Series(data=returns, index=returns.index)
+        d = {'datetime':returns.index, 'value':returns.values}
+
+        return_df = pd.DataFrame(d,columns=['datetime','value'])
+        return_df.reset_index(drop=True, inplace=True)
+        return_df.set_index('datetime', inplace=True)
+
+        print(f"return_df columns: {return_df.columns}")
+
+        return_df.index = pd.to_datetime(return_df.index)
+
+        cursor = self.conn.cursor()
+
+        # log in db
+        cursor.execute("""
+            DROP TABLE return_data
+        """)
+        self.conn.commit()
+
+        cursor.execute("""
+            CREATE TABLE return_data (
+                datetime BLOB,
+                value REAL
+            )
+        """)
+        self.conn.commit()
+
+        return_df.to_sql(name='return_data', con=conn, if_exists='replace', index=True)
+        self.conn.commit()
     
     def generate_curve_data(self):
+
+        # Make function and loop through data at some point
         curve = self.get_equity_curve()
+        buynhold = self.get_buynhold_curve()
 
         curve_df = pd.DataFrame(curve)
+        buynhold_df = pd.DataFrame(buynhold)
 
         # filter down to only the value at market close for each day.
         curve_df.index = pd.to_datetime(curve_df.index)
         curve_df = curve_df.between_time('00:04:00', '00:04:00')
+        buynhold_df.index = pd.to_datetime(buynhold_df.index)
+        buynhold_df = buynhold_df.between_time('00:04:00', '00:04:00')
 
+        xrnge = [curve_df.index[0], curve_df.index[-1]]
+
+        cursor = self.conn.cursor()
+
+        # log in db
         curve_df = curve_df.rename(columns = {0:"value"})
-        curve_df.to_csv("/Users/kylespringfield/Dev/MoneyTree/backtesting/data/curve_data.csv")
 
-        return print("== curve_data updated ==")
+        cursor.execute("""
+            DROP TABLE curve_data
+        """)
+        self.conn.commit()
+
+        cursor.execute("""
+            CREATE TABLE curve_data (
+                datetime BLOB,
+                value REAL
+            )
+        """)
+        self.conn.commit()
+
+        curve_df.to_sql(name='curve_data', con=conn, if_exists='replace', index=True)
+        self.conn.commit()
+
+        buynhold_df = buynhold_df.rename(columns = {"open":"value"})
+
+        cursor.execute("""
+            DROP TABLE buynhold_data
+        """)
+        self.conn.commit()
+
+        cursor.execute("""
+            CREATE TABLE buynhold_data (
+                datetime BLOB,
+                value REAL
+            )
+        """)
+        self.conn.commit()
+
+        buynhold_df.to_sql(name='buynhold_data', con=conn, if_exists='replace', index=True)
+        self.conn.commit()
+
+        return print("== curve data updated ==")
 
     # log the data from kpis into a database table 
     def log_backtest_report(self):
@@ -352,8 +437,11 @@ class Cerebro(bt.Cerebro):
                infilename=None, user=None, memo=None, run_id=None):
 
         bt = self.get_strategy_backtest()
+        
         rpt = PerformanceReport(bt, conn=conn, infilename=infilename, user=user,
                                 memo=memo, outputdir=outputdir, run_id=run_id)
+
+        rpt.generate_return_data()
         rpt.generate_curve_data()
         rpt.log_backtest_report()
         # rpt.generate_pdf_report()

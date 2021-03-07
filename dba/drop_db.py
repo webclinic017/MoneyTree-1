@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./")
+
 import sqlite3, config
 
 if input("You're about to drop all tables in app.db. Are you sure? (y/n)") != "y":

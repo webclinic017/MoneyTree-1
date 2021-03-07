@@ -7,8 +7,7 @@ class CrossOver(bt.Strategy):
     """
     params = (('fast', 50),
               ('slow', 200),
-              ('order_pct', 0.95),
-              ('market', 'BTC/USD')
+              ('order_pct', 0.95)
               )
 
     def __init__(self):
@@ -39,16 +38,20 @@ class CrossOver(bt.Strategy):
                 amount_to_invest = (self.p.order_pct *
                                     self.broker.cash)
                 self.size = amount_to_invest / self.data.close
-                msg = "*** MKT: {} BUY: {}"
-                self.log(msg.format(self.p.market, self.size))
+
+                order_details = f"{self.data.close[0]}, {amount_to_invest}, Size: {self.size}"
+                msg = f"BUY EXECUTED, Price: {order_details}"
+                self.log(msg)
                 self.buy(size=self.size)
 
         if self.position.size > 0:
             # we have an open position or made it to the end of backtest
             last_candle = (self.data.close.buflen() == len(self.data.close) + 1)
             if (self.crossover < 0) or last_candle:
-                msg = "*** MKT: {} SELL: {}"
-                self.log(msg.format(self.p.market, self.size))
+
+                order_details = f"{self.data.close[0]}, Size: {self.size}"
+                msg = f"SELL EXECUTED, Price: {order_details}"
+                self.log(msg)
                 self.close()
 
 class OpeningRangeBreakout(bt.Strategy):

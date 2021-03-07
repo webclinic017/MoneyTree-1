@@ -5,7 +5,11 @@
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
 	    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css">
 	    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.js"></script>
+        <meta name="viewport" content= "width=device-width, initial-scale=1"> 
         <style type="text/css">
+            .currSign:before { 
+                content: '$'; 
+            } 
             body {
                 background:  black;
             }
@@ -109,5 +113,14 @@
             {% block content %}
             {% endblock %}
         </div>
+        <script> 
+            let x = document.querySelectorAll(".myDIV"); 
+            for (let i = 0, len = x.length; i < len; i++) { 
+                let num = Number(x[i].innerHTML) 
+                          .toLocaleString('en'); 
+                x[i].innerHTML = num; 
+                x[i].classList.add("currSign"); 
+            } 
+        </script>
     </body>
 </html>

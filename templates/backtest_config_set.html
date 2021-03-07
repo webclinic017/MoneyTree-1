@@ -8,10 +8,10 @@
         </div>
     </h3>
 </div>
-<div class="ui raised inverted padded segment">
+<div class="ui raised inverted segment">
     <form id="run" name="run" action="/run_backtest" method="post">
     <div class="row">
-        <span><div class="fluid ui inverted teal large label">Set Configuration</div></span>
+        <span><div class="fluid ui inverted teal large ribbon label">Set Configuration</div></span>
     </div>
     <div class="ui divider"></div>
     <div class="row">
@@ -22,25 +22,18 @@
     </div>
     <div class="ui divider"></div>
     <div class="row">
-        <div class="ui inverted teal horizontal large basic label">
-            Strategy:
-            <div class="detail" style="color: white;">{{ set_config.strategy }}</div>
-        </div>
-    </div>
-    <div class="ui divider"></div>
-    <div class="row">
         <div class="ui form">
             <div class="inline fields">
                 <div class="field">
                     <div class="ui inverted teal horizontal large basic label">
-                        Start Date:
-                        <div class="detail" style="color: white;">{{ set_config.bt_start }}</div>
+                        Strategy:
+                        <div class="detail" style="color: white;">{{ set_config.strategy }}</div>
                     </div>
                 </div>
                 <div class="field">
                     <div class="ui inverted teal horizontal large basic label">
-                        End Date:
-                        <div class="detail" style="color: white;">{{ set_config.bt_end }}</div>
+                        Set Cash:
+                        <div class="detail" style="color: white;">${{ set_config.set_cash }}</div>
                     </div>
                 </div>
             </div>
@@ -52,10 +45,24 @@
             <div class="inline fields">
                 <div class="field">
                     <div class="ui inverted teal horizontal large basic label">
-                        Set Cash:
-                        <div class="detail" style="color: white;">${{ set_config.set_cash }}</div>
+                        Start Date:
+                        <div class="detail" style="color: white;">{{ set_config.bt_start[0:10] }}</div>
                     </div>
                 </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        End Date:
+                        <div class="detail" style="color: white;">{{ set_config.bt_end[0:10] }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Need to write and if in here to remove this row if not Opening Range strategy -->
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui form">
+            <div class="inline fields">
                 <div class="field">
                     <div class="ui inverted teal horizontal large basic label">
                         Opening Range:
@@ -80,7 +87,7 @@
     </form>
 </div>
 <div class="ui raised inverted segment">
-    <div class="fluid ui inverted teal large label">Backtesting Log</div>
+    <div class="fluid ui inverted teal large ribbon label">Backtesting Log</div>
     <div class="ui divider"></div>
     <table id="backtest_table" class="ui collapsing celled striped inverted black padded table">
         <thead>

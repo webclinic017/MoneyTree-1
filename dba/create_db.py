@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./")
+
 import sqlite3, config
 
 connection = sqlite3.connect(config.DB_FILE)

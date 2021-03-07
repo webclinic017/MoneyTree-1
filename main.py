@@ -6,18 +6,34 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from datetime import date
 from flask import send_from_directory
-from utils import get_market_hours_time
+from utils import get_market_hours_time, timestamp2date
 from typing import List
 from datetime import datetime as dt
 import pandas as pd
 from pydantic import BaseModel
 from backtesting.backtest import backtest, saveplots
 
-from backtesting.dashapp import create_dash_app
+from babel.numbers import format_currency
+
+from flask import Flask
 import uvicorn
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+def init_app():
+    """Construct core Flask application with embedded Dash app."""
+    dapp = Flask(__name__, instance_relative_config=False)
+    # dapp.config.from_object('config.Config')
+
+    with dapp.app_context():
+
+        from backtesting.dashboard import init_dashboard
+        dapp = init_dashboard(dapp)
+
+        print(f'== dapp initialized: {dapp} ==')
+
+        return dapp
 
 # decorator that provides the route on the local host
 @app.get("/")
@@ -343,9 +359,6 @@ async def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
              start_date=bt_config['bt_start'], end_date=bt_config['bt_end'], open_range=bt_config['open_range'],
              run_id=bt_config['run_id'], liquidate_time=bt_config['liquidate_time'], set_cash=bt_config['set_cash'])
 
-    dash_app = create_dash_app(routes_pathname_prefix="/dash/")
-    app.mount("/", WSGIMiddleware(dash_app.server))
-
     return RedirectResponse(url=f"/backtesting/final_report_{stock_id}_{run_id}", status_code=303)
 
 @app.get("/backtesting/final_report_{stock_id}_{run_id}")
@@ -370,8 +383,19 @@ def final_report(request: Request, stock_id, run_id):
 
     report = cursor.fetchone()
 
+    cursor.execute("""
+    SELECT *
+    FROM backtest_config
+    WHERE run_id = ?
+    """, (run_id,))
+
+    bt_config = cursor.fetchone()
+
+    dapp = init_app()
+    app.mount("/", WSGIMiddleware(dapp))
+
     return templates.TemplateResponse("backtest_final_report.html", {"request":request, "stock":stock, \
-                                                                     "report":report})
+                                                                     "report":report, "config":bt_config})
 
 if __name__ == "__main__":
     uvicorn.run(app)

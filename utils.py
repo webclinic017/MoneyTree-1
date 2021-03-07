@@ -1,4 +1,4 @@
-import math
+import math, os
 import pandas as pd
 from dateutil import parser
 from datetime import datetime
@@ -28,3 +28,29 @@ def is_dst():
     y = datetime.now(pytz.timezone('US/Eastern'))
 
     return not (y.utcoffset() == x.utcoffset())
+
+# report.py utils
+
+def timestamp2str(ts):
+    """ Converts Timestamp object to str containing date and time
+    """
+    date = ts.date().strftime("%Y-%m-%d")
+    time = ts.time().strftime("%H:%M:%S")
+    return ' '.join([date, time])
+
+def timestamp2date(ts):
+    """ Converts Timestamp object to str containing date
+    """
+    date = ts.date().strftime("%Y-%m-%d")
+    return date
+
+def get_now():
+    """ Return current datetime as str
+    """
+    return timestamp2str(datetime.now())
+
+
+def dir_exists(foldername):
+    """ Return True if folder exists, else False
+    """
+    return os.path.isdir(foldername)

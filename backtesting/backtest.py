@@ -1,9 +1,12 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
+import sys
+sys.path.append("./")
+
 import os, sqlite3, config, sys
 import pandas as pd
 import backtrader as bt
 from backtesting.report import Cerebro
-from strategy_classes import CrossOver, OpeningRangeBreakout
+from backtesting.strategy_classes import CrossOver, OpeningRangeBreakout
 
 # Convert this into a bactest function that can be called within main and it runs and inserts 
 #  data into the database. The inserting into the database part can be done within the report.py file.
@@ -73,7 +76,7 @@ def backtest(stock_id, strategy, conn, start_date=None, end_date=None, \
     
     return print('== Backtesting Complete ==')
 
-# Test complete - logs data into database
+# # Test run. Comment out for app to work on site.
 
 # stock_id = 9395
 # strategy = "crossover"

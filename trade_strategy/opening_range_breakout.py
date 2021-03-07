@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./")
+
 import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime

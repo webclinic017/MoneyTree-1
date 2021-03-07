@@ -8,11 +8,11 @@
         </div>
     </h3>
 </div>
-<div class="ui raised inverted padded segment">
+<div class="ui raised inverted segment">
     <form action="/submit_backtest_config" method="post">
         <div class="ui equal width form">
             <div class="row">
-                <span><div class="fluid ui inverted teal large label">Create Configuration</div></span>
+                <span><div class="fluid ui inverted teal large ribbon label">Create Configuration</div></span>
             </div>
             <div class="ui divider"></div>
             <div class="inline field">
@@ -27,20 +27,32 @@
                 </select>
             </div>
             <div class="ui divider"></div>
-            <div class="inline field">
-                <div class="ui inverted teal horizontal medium basic label">Select Strategy:</div>
-                <select class="ui search dropdown" name="strategy">
-                        <option value="none" selected disabled hidden>
-                            ---
-                        </option>
-                    {% for strat in strategies %}
-                        <option value="{{ strat }}">{{ strat }}</option>
-                    {% endfor %}
-                </select>
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Strategy:</div>
+                    <select class="ui search dropdown" name="strategy">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for strat in strategies %}
+                            <option value="{{ strat }}">{{ strat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">Select Starting Cash:</div>
+                    <select class="ui search dropdown" name="set_cash">
+                            <option value="none" selected disabled hidden>
+                                ---
+                            </option>
+                        {% for cash in set_cash %}
+                            <option value="{{ cash }}">${{ cash }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             <div class="ui divider"></div>
             <div class="inline fields">
-                <div class="ui divider"></div>
                 <div class="field">
                     <div class="ui inverted teal horizontal medium basic label">Select Start Date:</div>
                     <select class="ui search dropdown" name="start_date">
@@ -65,19 +77,9 @@
                     </select>
                 </div>
             </div>
+            <!-- Need to write and if in here to remove this row if not Opening Range strategy -->
             <div class="ui divider"></div>
             <div class="inline fields">
-                <div class="field">
-                    <div class="ui inverted teal horizontal medium basic label">Select Starting Cash:</div>
-                    <select class="ui search dropdown" name="set_cash">
-                            <option value="none" selected disabled hidden>
-                                ---
-                            </option>
-                        {% for cash in set_cash %}
-                            <option value="{{ cash }}">${{ cash }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
                 <div class="field">
                     <div class="ui inverted teal horizontal medium basic label">Select Opening Range:</div>
                     <select class="ui search dropdown" name="open_range">
