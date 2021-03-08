@@ -359,6 +359,9 @@ async def run_backtest(stock_id: int = Form(...), run_id: int = Form(...)):
              start_date=bt_config['bt_start'], end_date=bt_config['bt_end'], open_range=bt_config['open_range'],
              run_id=bt_config['run_id'], liquidate_time=bt_config['liquidate_time'], set_cash=bt_config['set_cash'])
 
+    dapp = init_app()
+    app.mount("/", WSGIMiddleware(dapp))
+
     return RedirectResponse(url=f"/backtesting/final_report_{stock_id}_{run_id}", status_code=303)
 
 @app.get("/backtesting/final_report_{stock_id}_{run_id}")
@@ -390,9 +393,6 @@ def final_report(request: Request, stock_id, run_id):
     """, (run_id,))
 
     bt_config = cursor.fetchone()
-
-    dapp = init_app()
-    app.mount("/", WSGIMiddleware(dapp))
 
     return templates.TemplateResponse("backtest_final_report.html", {"request":request, "stock":stock, \
                                                                      "report":report, "config":bt_config})
