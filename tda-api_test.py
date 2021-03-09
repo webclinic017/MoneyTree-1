@@ -20,12 +20,23 @@ except FileNotFoundError:
 # assert r.status_code == 200, r.raise_for_status()
 # print(json.dumps(r.json(), indent=4))
 
-# res = c.get_quote('AAPL')
+# # Get quotes
+# res = c.get_quotes('AAPL')
 
-# print(res.json())
+# print(json.dumps(res.json(), indent=4))
 
+# # Get Fundamentals
 # res = c.search_instruments(['AAPL'], c.Instrument.Projection.FUNDAMENTAL)
 
+# print(json.dumps(res.json(), indent=4))
+
+# # Get movers
+res = c.get_movers(index='SPX.X', direction=c.Movers.Direction.UP, change=c.Movers.Change.PERCENT)
+
+print(json.dumps(res.json(), indent=4))
+
+
+# # Options
 # print(json.dumps(res.json(), indent=4))
 
 # res = c.get_option_chain('AAPL')
@@ -37,12 +48,9 @@ except FileNotFoundError:
 
 # print(json.dumps(res.json(), indent=4))
 
-# Placing Orders
+# # Account Info
+# res = c.get_account(config.tda_account_id)
 
-# client = ...
-# account_id =  
-res = c.get_account(config.tda_account_id)
-
-print(json.dumps(res.json(), indent=4))
+# print(json.dumps(res.json(), indent=4))
 
 

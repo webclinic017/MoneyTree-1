@@ -5,6 +5,21 @@ import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime
 from utils import calculate_quantity, is_dst
+import pandas as pd
+
+conn = sqlite3.connect(config.DB_FILE)
+
+def get_latest_tda_minute_bar(symbol, conn):
+    df = pd.read_sql("""
+        SELECT *
+        FROM tda_stock_price_minute
+        WHERE key = :symbol
+        ORDER BY chart_time DESC
+        LIMIT 1
+    """, conn, params={"symbol":symbol})
+
+    return df
+
 
 print(datetime.now())
 
@@ -53,18 +68,22 @@ short_messages = []
 
 for symbol in symbols:
     
-    minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
+    # REPLACE with tda-stream
+    # minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
+
+    # REPLACEMENT
+    minute_bars = get_latest_tda_minute_bar(symbol, conn)
 
     print(minute_bars)
     
-    opening_range_mask = (minute_bars.index >= start_minute_bar) & (minute_bars.index < end_minute_bar)
+    opening_range_mask = (minute_bars.chart_time >= start_minute_bar) & (minute_bars.chart_time < end_minute_bar)
     opening_range_bars = minute_bars.loc[opening_range_mask]
 
     opening_range_low = opening_range_bars['low'].min()
     opening_range_high = opening_range_bars['high'].max()
     opening_range = opening_range_high - opening_range_low
 
-    after_opening_range_mask = minute_bars.index >= end_minute_bar
+    after_opening_range_mask = minute_bars.chart_time >= end_minute_bar
     after_opening_range_bars = minute_bars.loc[after_opening_range_mask]
 
     after_opening_range_breakout = after_opening_range_bars[after_opening_range_bars['close'] > opening_range_high]
