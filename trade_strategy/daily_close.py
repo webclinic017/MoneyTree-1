@@ -1,5 +1,5 @@
 import sys
-sys.path.append("./")
+sys.path.append("/Users/kylespringfield/Dev/MoneyTree/")
 
 import config
 import alpaca_trade_api as tradeapi

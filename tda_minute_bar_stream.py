@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/Users/kylespringfield/Dev/MoneyTree/")
+
 from tda.auth import easy_client
 from tda.client import Client
 from tda.streaming import StreamClient
@@ -7,11 +10,20 @@ import json
 import config, sqlite3
 import time
 import datetime
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO, filename='/Users/kylespringfield/Dev/MoneyTree/logs/tda_stream.log')
 
 connection = sqlite3.connect(config.DB_FILE)
 connection.row_factory = sqlite3.Row
 
 cursor = connection.cursor()
+
+# Delete all from tda_stock_price_minute table. Do not need to store this info. Also will prevent dups.
+cursor.execute("""
+    DELETE FROM tda_stock_price_minute
+""")
+connection.commit()
 
 cursor.execute("""
     SELECT symbol, name
@@ -21,8 +33,7 @@ cursor.execute("""
 
 stocks = cursor.fetchall()
 symbols = [stock['symbol'] for stock in stocks]
-print(symbols)
-
+logging.info(symbols)
 
 client = easy_client(
         api_key=config.tda_api_key,
@@ -31,7 +42,7 @@ client = easy_client(
 
 stream_client = StreamClient(client, account_id=config.tda_account_id)
 
-async def insert_stream_data(msg):
+async def insert_stream_data(msg, symbols):
         data = json.loads(msg)
 
         with sqlite3.connect(config.DB_FILE) as conn:
@@ -79,25 +90,35 @@ async def insert_stream_data(msg):
                         conn.execute(cmd, values)
                 
                 conn.commit()
+
+                now = time.time()
+                now = datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')
         
-        return print("=== inserted data ===")
+        return logging.info(f"inserted new prices for {symbols}")
 
 async def read_stream(symbol, symbols):
-    await stream_client.login()
-    await stream_client.quality_of_service(StreamClient.QOSLevel.EXPRESS)
+        await stream_client.login()
+        await stream_client.quality_of_service(StreamClient.QOSLevel.EXPRESS)
 
-    # Always add handlers before subscribing because many streams start sending
-    # data immediately after success, and messages with no handlers are dropped.
-    stream_client.add_chart_equity_handler(
-            # lambda msg: print(json.dumps(msg['content'], indent=4)))
-            lambda msg: insert_stream_data(json.dumps(msg['content'], indent=4)))
+        # Always add handlers before subscribing because many streams start sending
+        # data immediately after success, and messages with no handlers are dropped.
+        stream_client.add_chart_equity_handler(
+                # lambda msg: print(json.dumps(msg['content'], indent=4)))
+                lambda msg: insert_stream_data(json.dumps(msg['content'], indent=4), symbols))
 
-    await stream_client.chart_equity_subs([symbols[0]])
+        await stream_client.chart_equity_subs([symbols[0]])
 
-    for s in symbols:
-        await stream_client.chart_equity_add([s])
+        for s in symbols:
+                await stream_client.chart_equity_add([s])
 
-    while True:
-        await stream_client.handle_message()
+        # set to run from 9am - 4pm
+        stream_end = time.time() + 60 * 420
+
+        st = datetime.datetime.fromtimestamp(stream_end).strftime('%Y-%m-%d %H:%M:%S')
+
+        logging.info(f"stream end: {st}")
+
+        while time.time() < stream_end:
+                await stream_client.handle_message()
 
 asyncio.run(read_stream(symbols[0], symbols))

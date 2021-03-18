@@ -1,10 +1,24 @@
 import sys
-sys.path.append("./")
+sys.path.append("/Users/kylespringfield/Dev/MoneyTree/")
 
 import sqlite3, config, notifications, ssl, tulipy
 import alpaca_trade_api as tradeapi
 from datetime import date, datetime
 from utils import calculate_quantity, is_dst
+import pandas as pd
+
+conn = sqlite3.connect(config.DB_FILE)
+
+# removed the limit of 1 because I forgot that the replacement df is a historical minute by minute price history for the current day.
+def get_latest_tda_minute_bars(symbol, conn):
+    df = pd.read_sql("""
+        SELECT *
+        FROM tda_stock_price_minute
+        WHERE key = :symbol
+        ORDER BY chart_time DESC
+    """, conn, params={"symbol":symbol})
+
+    return df
 
 print(datetime.now())
  
@@ -54,9 +68,13 @@ short_messages = []
 
 for symbol in symbols:
 
-    minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
+    # REPLACE with tda-stream
+    # minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
 
-    market_open_mask = (minute_bars.index >= start_minute_bar) & (minute_bars.index < end_minute_bar)
+    # REPLACEMENT
+    minute_bars = get_latest_tda_minute_bars(symbol, conn)
+
+    market_open_mask = (minute_bars.chart_time >= start_minute_bar) & (minute_bars.chart_time < end_minute_bar)
     market_open_bars = minute_bars.loc[market_open_mask]
 
     if len(market_open_bars) >= 20:

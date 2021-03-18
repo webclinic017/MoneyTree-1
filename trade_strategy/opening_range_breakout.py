@@ -1,5 +1,5 @@
 import sys
-sys.path.append("./")
+sys.path.append("/Users/kylespringfield/Dev/MoneyTree/")
 
 import sqlite3, config, notifications, ssl
 import alpaca_trade_api as tradeapi
@@ -9,17 +9,16 @@ import pandas as pd
 
 conn = sqlite3.connect(config.DB_FILE)
 
-def get_latest_tda_minute_bar(symbol, conn):
+# removed the limit of 1 because I forgot that the replacement df is a historical minute by minute price history for the current day.
+def get_latest_tda_minute_bars(symbol, conn):
     df = pd.read_sql("""
         SELECT *
         FROM tda_stock_price_minute
         WHERE key = :symbol
         ORDER BY chart_time DESC
-        LIMIT 1
     """, conn, params={"symbol":symbol})
 
     return df
-
 
 print(datetime.now())
 
@@ -72,9 +71,9 @@ for symbol in symbols:
     # minute_bars = api.polygon.historic_agg_v2(symbol, 1, 'minute', _from=current_date, to=current_date).df
 
     # REPLACEMENT
-    minute_bars = get_latest_tda_minute_bar(symbol, conn)
+    minute_bars = get_latest_tda_minute_bars(symbol, conn)
 
-    print(minute_bars)
+    print(f"Latest prices inserted for {symbol} --> @ {minute_bars.chart_time.max()} | total rows: {len(minute_bars)}")
     
     opening_range_mask = (minute_bars.chart_time >= start_minute_bar) & (minute_bars.chart_time < end_minute_bar)
     opening_range_bars = minute_bars.loc[opening_range_mask]
