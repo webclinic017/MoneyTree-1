@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Backtesting Configuration
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted segment">
+    <form id="run" name="run" action="/run_backtest" method="post">
+    <div class="row">
+        <span><div class="fluid ui inverted teal large ribbon label">Set Configuration</div></span>
+    </div>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal horizontal large basic label">
+            Stock:
+            <div class="detail" style="color: white;"><a href="/stock/{{ stock.symbol }}">{{ stock.symbol }}</a> | {{ stock.name }}</div>
+        </div>
+    </div>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui form">
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        Strategy:
+                        <div class="detail" style="color: white;">{{ set_config.strategy }}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        Set Cash:
+                        <div class="detail" style="color: white;">${{ set_config.set_cash }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui form">
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        Start Date:
+                        <div class="detail" style="color: white;">{{ set_config.bt_start[0:10] }}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        End Date:
+                        <div class="detail" style="color: white;">{{ set_config.bt_end[0:10] }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Need to write and if in here to remove this row if not Opening Range strategy -->
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui form">
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        Opening Range:
+                        <div class="detail" style="color: white;">{{ set_config.open_range }} minutes</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal large basic label">
+                        Liquidate Time:
+                        <div class="detail" style="color: white;">{{ set_config.liquidate_time }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui divider"></div>
+        <div class="inline field">
+            <input type="hidden" name="run_id" value="{{ set_config.run_id }}"/>
+            <input type="hidden" name="stock_id" value="{{ set_config.stock_id }}"/>
+            <input type="submit" id="submit" button class="fluid ui inverted teal medium button" value="Run Backtest"/>
+        </div>
+    </form>
+</div>
+<div class="ui raised inverted segment">
+    <div class="fluid ui inverted teal large ribbon label">Backtesting Log</div>
+    <div class="ui divider"></div>
+    <table id="backtest_table" class="ui collapsing celled striped inverted black padded table">
+        <thead>
+            <tr>
+                <th>Run Id</th>
+                <th>Date</th>
+                <th>Stock Id</th>
+                <th style="white-space:nowrap;">Strategy</th>
+                <th style="white-space:nowrap;">Start</th>
+                <th style="white-space:nowrap;">End</th>
+                <th style="white-space:nowrap;">Set Cash</th>
+                <th style="white-space:nowrap;">Open Range</th>
+                <th style="white-space:nowrap;">Liquidate Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bt in backtest_configs %}
+            <tr>
+                <td>{{ bt.run_id }}</td>
+                <td>{{ bt.date[0:16] }}</td>
+                <td>{{ bt.stock_id }}</td>
+                <td>{{ bt.strategy }}</td>
+                <td>{{ bt.bt_start[0:16] }}</td>
+                <td>{{ bt.bt_end[0:16] }}</td>
+                <td>{{ bt.set_cash }}</td>
+                <td>{{ bt.open_range }}</td>
+                <td>{{ bt.liquidate_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

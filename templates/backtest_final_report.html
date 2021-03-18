@@ -1,0 +1,218 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="ui inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            Backtesting Report
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted segment">
+    <h3 class="ui white justified inverted header">
+        <div class="row">
+            <a href="/stock/{{ stock.symbol }}">{{ stock.symbol }}</a> | {{ stock.name }}
+        </div>
+    </h3>
+</div>
+<div class="ui raised inverted segment">
+    <div class="row">
+        <span><div class="fluid ui inverted teal large ribbon label">Final Results</div></span>
+    </div>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal ribbon label">Configuration</div>
+    </div>
+    <br>
+    <div class="ui form">
+        <div class="row">
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">
+                        Run Id:
+                        <div class="detail" style="color: white;">{{ config.run_id }}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">
+                        Strategy:
+                        <div class="detail" style="color: white;">{{ config.strategy }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="inline fields">
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">
+                        Start:
+                        <div class="detail" style="color: white;">{{ config.bt_start[0:10] }}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">
+                        End:
+                        <div class="detail" style="color: white;">{{ config.bt_end[0:10] }}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui inverted teal horizontal medium basic label">
+                        Set Cash:<div class="detail" style="color: white;"><div class="myDIV">{{ config.set_cash }}</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Need to write and if in here to remove this row if not Opening Range strategy -->
+    <div class="ui divider"></div>
+    <div class="ui form">
+        <div class="inline fields">
+            <div class="field">
+                <div class="ui inverted teal horizontal medium basic label">
+                    Opening Range:
+                    <div class="detail" style="color: white;">{{ config.open_range }} minute(s)</div>
+                </div>
+            </div>
+            <div class="field">
+                <div class="ui inverted teal horizontal medium basic label">
+                    Liquidate Time:
+                    <div class="detail" style="color: white;">{{ config.liquidate_time }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal ribbon label">Graphs</div>
+    </div>
+    <p style="text-align:center"><iframe src="http://localhost:8000/dash" allowtransparency = "true" frameborder="0" width=730 height=930></iframe></p>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal ribbon label">Profit & Loss</div>
+    </div>
+        <table class="ui striped celled inverted two column table">
+            <tbody>
+                <tr>
+                    <td>Start Capital</td>
+                    <td ><div class="myDIV">{{ report.start_cash }}</div></td>
+                </tr>
+                {% if report.rpl > 0 %}
+                    <tr class="positive">
+                        <td>Net Profit</td>
+                        <td><div class="myDIV">{{ report.rpl }}</div></td>
+                    </tr>
+                {% else %}
+                    <tr class="negative">
+                        <td>Net Profit</td>
+                        <td><div class="myDIV">{{ report.rpl }}</div></td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td>$ Winning Trades</td>
+                    <td><div class="myDIV">{{ report.result_won_trades }}</div></td>
+                </tr>
+                <tr>
+                    <td>$ Lost Trades</td>
+                    <td><div class="myDIV">{{ report.result_lost_trades }}</div></td>
+                </tr>
+                {% if report.profit_factor > 1 %}
+                    <tr class='positive'>
+                        <td>Profit Factor</td>
+                        <td>{{ report.profit_factor }}</td>
+                    </tr>
+                {% else %}
+                    <tr class="negative">
+                        <td>Profit Factor</td>
+                        <td>{{ report.profit_factor }}</td>
+                    </tr>
+                {% endif %}
+                {% if report.total_return > 0 %}
+                    <tr class='positive'>
+                        <td>Total Return</td>
+                        <td>{{ report.total_return }}%</td>
+                    </tr>
+                {% else %}
+                    <tr class="negative">
+                        <td>Total Return</td>
+                        <td>{{ report.total_return }}%</td>
+                    </tr>
+                {% endif %}
+                {% if report.annual_return > 0 %}
+                    <tr class='positive'>
+                        <td>Annual Return</td>
+                        <td>{{ report.annual_return }}%</td>
+                    </tr>
+                {% else %}
+                    <tr class="negative">
+                        <td>Annual Return</td>
+                        <td>{{ report.annual_return }}%</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td>Max $ Drawdown</td>
+                    <td><div class="myDIV">{{ report.max_money_drawdown }}</div></td>
+                </tr>
+                <tr>
+                    <td>Max % Drawdown</td>
+                    <td>{{ report.max_pct_drawdown }}%</td>
+                </tr>
+            </tbody>
+        </table>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal ribbon label">Trades</div>
+    </div>
+    <table class="ui striped celled inverted two column table">
+        <tbody>
+            <tr>
+                <td># of Trades</td>
+                <td>{{ report.total_number_trades }}</td>
+            </tr>
+            <tr>
+                <td>% Winning</td>
+                <td>{{ report.pct_winning }}%</td>
+            </tr>
+            <tr>
+                <td>% Losing</td>
+                <td>{{ report.pct_losing }}%</td>
+            </tr>
+            <tr>
+                <td>Avg $ Winning</td>
+                <td><div class="myDIV">{{ report.avg_money_winning }}</div></td>
+            </tr>
+            <tr>
+                <td>Avg $ Losing</td>
+                <td><div class="myDIV">{{ report.avg_money_losing }}</div></td>
+            </tr>
+            <tr>
+                <td>Best Winning Trade</td>
+                <td><div class="myDIV">{{ report.best_winning_trade }}</div></td>
+            </tr>
+            <tr>
+                <td>Worst Losing Trade</td>
+                <td><div class="myDIV">{{ report.worst_losing_trade }}</div></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="ui divider"></div>
+    <div class="row">
+        <div class="ui inverted teal ribbon label">KPIs</div>
+    </div>
+    <table class="ui striped celled inverted two column table">
+        <tbody>
+            <tr>
+                <td>Sharpe Ratio</td>
+                <td>{{ report.sharpe_ratio }}</td>
+            </tr>
+            <tr>
+                <td>SQN Score</td>
+                <td>{{ report.sqn_score }}</td>
+            </tr>
+            <tr>
+                <td>SQN Human</td>
+                <td>{{ report.sqn_human }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
